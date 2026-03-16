@@ -1,0 +1,151 @@
+---
+title: "User management"
+description: "How to register, authenticate, and manage user accounts on the Periodico platform."
+---
+
+The user system handles registration, authentication via JWT, password changes, and account deletion. Most read operations are public; write operations that affect your account require a valid token.
+
+---
+
+## Registration and login
+
+<Steps>
+  <Step title="Register an account">
+    Send your desired `username`, `password`, and `gmail` as query parameters.
+
+    ```bash POST /users/register
+    curl -X POST "https://api.example.com/users/register?username=johndoe&password=Secure123&gmail=john@example.com"
+    ```
+
+    **Password requirements:**
+    - Minimum 8 characters
+    - At least one uppercase letter
+    - At least one lowercase letter
+    - At least one digit
+
+    A successful response returns:
+
+    ```json
+    { "status": "ok", "message": "Usuario creado correctamente" }
+    ```
+  </Step>
+
+  <Step title="Log in">
+    Authenticate with your Gmail and password to receive a JWT.
+
+    ```bash POST /users/login
+    curl -X POST "https://api.example.com/users/login?gmail=john@example.com&password=Secure123"
+    ```
+
+    A successful response includes your token and basic user info:
+
+    ```json
+    {
+      "status": "ok",
+      "message": "Login correcto",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "user": {
+        "id": 1,
+        "username": "johndoe",
+        "gmail": "john@example.com"
+      }
+    }
+    ```
+
+    Returns `404` if the Gmail is not registered, and `401` if the password is incorrect.
+  </Step>
+
+  <Step title="Use the token">
+    Include the token in the `Authorization` header for all authenticated requests:
+
+    ```bash
+    Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    ```
+  </Step>
+</Steps>
+
+---
+
+## Getting user information
+
+### Current user
+
+Returns the full profile of the currently authenticated user.
+
+```bash GET /users/me
+curl -X GET "https://api.example.com/users/me" \
+  -H "Authorization: Bearer <token>"
+```
+
+### Get user by ID
+
+Publicly accessible — no token required.
+
+```bash GET /users/get-by-id
+curl -X GET "https://api.example.com/users/get-by-id?id=1"
+```
+
+### Get user by Gmail
+
+```bash GET /users/get-by-gmail
+curl -X GET "https://api.example.com/users/get-by-gmail?gmail=john@example.com"
+```
+
+---
+
+## Token verification
+
+Use this endpoint to check whether a token is still valid and to read its expiry time.
+
+```bash GET /user/verify-token
+curl -X GET "https://api.example.com/user/verify-token" \
+  -H "Authorization: Bearer <token>"
+```
+
+Response on a valid token:
+
+```json
+{
+  "valid": true,
+  "user_id": 1,
+  "expires": 1710000000
+}
+```
+
+---
+
+## Changing your password
+
+Provide your Gmail, current password, and the new password you want to set.
+
+```bash PATCH /users/change-password
+curl -X PATCH "https://api.example.com/users/change-password?gmail=john@example.com&old_password=Secure123&new_password=NewSecure456"
+```
+
+<Note>
+  The new password must also meet the same requirements as registration: minimum 8 characters, at least one uppercase letter, one lowercase letter, and one digit.
+</Note>
+
+Possible error responses:
+
+| Status | Reason |
+| ------ | ------ |
+| `404`  | Gmail not registered |
+| `401`  | Current password is incorrect |
+| `401`  | New password does not meet format requirements |
+| `500`  | Password could not be updated |
+
+---
+
+## Deleting your account
+
+Permanently deletes the authenticated user's account. This action cannot be undone.
+
+```bash DELETE /users/delete-me
+curl -X DELETE "https://api.example.com/users/delete-me" \
+  -H "Authorization: Bearer <token>"
+```
+
+<Warning>
+  Account deletion is immediate and irreversible. All data associated with the account is removed. Admins can also delete accounts by Gmail or ID — see the [Admin guide](/guides/admin-guide).
+</Warning>

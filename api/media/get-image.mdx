@@ -1,0 +1,43 @@
+---
+title: "Get image"
+description: "Retrieve a stored image by its ID. Returns the raw binary image data with the correct Content-Type header."
+---
+
+## Endpoint
+
+```
+GET /media/image/{media_id}
+```
+
+<Note>
+  This endpoint does not require authentication. Images are publicly accessible.
+</Note>
+
+## Parameters
+
+<ParamField path="media_id" type="number" required>
+  The unique ID of the image to retrieve.
+</ParamField>
+
+## Request example
+
+```bash cURL
+curl --request GET \
+  --url 'https://api.example.com/media/image/15'
+```
+
+## Response
+
+**200 OK**
+
+The response body contains the raw binary image data. The `Content-Type` header reflects the original MIME type of the image (e.g., `image/jpeg`, `image/png`).
+
+| Header | Description |
+|--------|-------------|
+| `Content-Type` | MIME type of the image (e.g., `image/jpeg`). |
+
+## Error codes
+
+| Status | Description |
+|--------|-------------|
+| `404`  | No image found with the given `media_id`. |

@@ -1,0 +1,97 @@
+---
+title: "Update post"
+description: "Update the title, slug, body content, or section of an existing post."
+---
+
+<Warning>
+  Admin authentication is required. Include a valid `Authorization: Bearer <token>` header with admin privileges.
+</Warning>
+
+## Endpoint
+
+```
+PATCH /admin/update-post
+```
+
+## Request body
+
+Send a JSON object (`Content-Type: application/json`) with the following fields:
+
+<ParamField body="post_id" type="number" required>
+  The ID of the post to update.
+</ParamField>
+
+<ParamField body="title" type="string" required>
+  Updated title for the post.
+</ParamField>
+
+<ParamField body="slug" type="string" required>
+  Updated URL-friendly identifier for the post.
+</ParamField>
+
+<ParamField body="body" type="object" required>
+  Updated post body content.
+
+  <Expandable title="body properties">
+    <ParamField body="subtitulo" type="string" required>
+      Updated subtitle or summary text.
+    </ParamField>
+    <ParamField body="contenido_html" type="string" required>
+      Updated full HTML content of the post body.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="section_id" type="number" required>
+  The ID of the section to move the post to.
+</ParamField>
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for admin authentication. Format: `Bearer <token>`
+</ParamField>
+
+<Note>
+  As with post creation, the `body` content is compressed with zlib at level 9 before being stored.
+</Note>
+
+## Request example
+
+```bash cURL
+curl --request PATCH \
+  --url 'https://api.example.com/admin/update-post' \
+  --header 'Authorization: Bearer <your-admin-token>' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "post_id": 42,
+    "title": "Updated: Breaking News",
+    "slug": "updated-breaking-news-2024",
+    "body": {
+      "subtitulo": "A correction to our earlier report.",
+      "contenido_html": "<p>Corrected article content.</p>"
+    },
+    "section_id": 3
+  }'
+```
+
+## Response
+
+**200 OK**
+
+<ResponseField name="message" type="string">
+  Human-readable confirmation message.
+</ResponseField>
+
+```json 200
+{
+  "message": "Post actualizado correctamente"
+}
+```
+
+## Error codes
+
+| Status | Description |
+|--------|-------------|
+| `401`  | Missing or invalid authorization token. |
+| `403`  | Token is valid but the user does not have admin privileges. |
+| `404`  | No post found with the given `post_id`. |
+| `422`  | Request body failed validation (e.g., missing required fields). |

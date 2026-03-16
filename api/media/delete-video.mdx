@@ -1,0 +1,62 @@
+---
+title: "Delete video"
+description: "Permanently delete a stored video by its ID."
+---
+
+<Warning>
+  Admin authentication is required. Include a valid `Authorization: Bearer <token>` header with admin privileges.
+</Warning>
+
+<Warning>
+  This operation is irreversible. The video cannot be recovered after deletion.
+</Warning>
+
+## Endpoint
+
+```
+DELETE /media/video/delete-by-id
+```
+
+## Parameters
+
+<ParamField query="video_id" type="number" required>
+  The unique ID of the video to delete.
+</ParamField>
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for admin authentication. Format: `Bearer <token>`
+</ParamField>
+
+## Request example
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://api.example.com/media/video/delete-by-id?video_id=7' \
+  --header 'Authorization: Bearer <your-admin-token>'
+```
+
+## Response
+
+**200 OK**
+
+<ResponseField name="status" type="string">
+  Always `"ok"` on success.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Human-readable confirmation message.
+</ResponseField>
+
+```json 200
+{
+  "status": "ok",
+  "message": "Video borrado correctamente"
+}
+```
+
+## Error codes
+
+| Status | Description |
+|--------|-------------|
+| `401`  | Missing or invalid authorization token. |
+| `403`  | Token is valid but the user does not have admin privileges. |

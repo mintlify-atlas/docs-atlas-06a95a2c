@@ -1,0 +1,50 @@
+---
+title: "Get video"
+description: "Stream a stored video by its ID. Returns the video data in 1 MB chunks using a streaming response."
+---
+
+## Endpoint
+
+```
+GET /media/video/{video_id}
+```
+
+<Note>
+  This endpoint does not require authentication. Videos are publicly accessible.
+</Note>
+
+## Parameters
+
+<ParamField path="video_id" type="number" required>
+  The unique ID of the video to stream.
+</ParamField>
+
+## Request example
+
+```bash cURL
+curl --request GET \
+  --url 'https://api.example.com/media/video/7'
+```
+
+## Response
+
+**200 OK**
+
+The response body is a streaming response delivering the video binary data in 1 MB chunks. The server sets the following response headers:
+
+| Header | Description |
+|--------|-------------|
+| `Content-Type` | MIME type of the video (e.g., `video/mp4`, `video/webm`). |
+| `Content-Disposition` | Inline disposition with the original filename. Example: `inline; filename=intro.mp4`. |
+| `Content-Length` | Total size of the video in bytes. |
+| `Accept-Ranges` | Always `bytes`, indicating the server supports byte-range requests. |
+
+<Tip>
+  Because the server sets `Accept-Ranges: bytes`, browsers and media players can seek within the video without downloading the entire file first.
+</Tip>
+
+## Error codes
+
+| Status | Description |
+|--------|-------------|
+| `404`  | No video found with the given `video_id`. |

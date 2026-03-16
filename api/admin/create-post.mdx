@@ -1,0 +1,103 @@
+---
+title: "Create post"
+description: "Create a new post and associate it with an author and a section."
+---
+
+<Warning>
+  Admin authentication is required. Include a valid `Authorization: Bearer <token>` header with admin privileges.
+</Warning>
+
+## Endpoint
+
+```
+POST /admin/create-post
+```
+
+## Request body
+
+Send a JSON object (`Content-Type: application/json`) with the following fields:
+
+<ParamField body="title" type="string" required>
+  The title of the post.
+</ParamField>
+
+<ParamField body="slug" type="string" required>
+  URL-friendly identifier for the post (e.g., `my-first-post`).
+</ParamField>
+
+<ParamField body="body" type="object" required>
+  The post body content.
+
+  <Expandable title="body properties">
+    <ParamField body="subtitulo" type="string" required>
+      Subtitle or summary text displayed beneath the main title.
+    </ParamField>
+    <ParamField body="contenido_html" type="string" required>
+      Full HTML content of the post body.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="user_id" type="number" required>
+  The ID of the author. The user must already exist.
+</ParamField>
+
+<ParamField body="section_id" type="number" required>
+  The ID of the section to publish the post under. The section must already exist.
+</ParamField>
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for admin authentication. Format: `Bearer <token>`
+</ParamField>
+
+<Note>
+  The `body` content is serialized to JSON and compressed with zlib at compression level 9 before being persisted. There is no action required on your part — this is handled transparently by the server.
+</Note>
+
+## Request example
+
+```bash cURL
+curl --request POST \
+  --url 'https://api.example.com/admin/create-post' \
+  --header 'Authorization: Bearer <your-admin-token>' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "title": "Breaking News",
+    "slug": "breaking-news-2024",
+    "body": {
+      "subtitulo": "An important update for our readers.",
+      "contenido_html": "<p>Full article content goes here.</p>"
+    },
+    "user_id": 1,
+    "section_id": 3
+  }'
+```
+
+## Response
+
+**200 OK**
+
+<ResponseField name="status" type="string">
+  Always `"ok"` on success.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Human-readable confirmation message.
+</ResponseField>
+
+```json 200
+{
+  "status": "ok",
+  "message": "Post creado correctamente"
+}
+```
+
+## Error codes
+
+| Status | Description |
+|--------|-------------|
+| `401`  | Missing or invalid authorization token. |
+| `403`  | Token is valid but the user does not have admin privileges. |
+| `404`  | The specified `user_id` does not correspond to an existing user. |
+| `404`  | The specified `section_id` does not correspond to an existing section. |
+| `422`  | Request body failed validation (e.g., missing required fields). |

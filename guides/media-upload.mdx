@@ -1,0 +1,154 @@
+---
+title: "Media upload"
+description: "How to upload, retrieve, and delete images and videos attached to posts on the Periodico platform."
+---
+
+Media files — images and videos — are always associated with a specific post via its `post_id`. Upload endpoints require admin authentication. Retrieval endpoints are public.
+
+<Info>
+  The post must exist before you can attach media to it. Uploading to a non-existent `post_id` returns `404`.
+</Info>
+
+---
+
+<Tabs>
+  <Tab title="Images">
+    ## Uploading an image
+
+    Images are attached to a post as cover media. They are compressed at quality 85 before storage to reduce size.
+
+    **Allowed types:** JPEG, PNG, WebP, GIF  
+    **Max size:** 10 MB  
+    **Requires:** admin token
+
+    ```bash POST /media/upload/image
+    curl -X POST "https://api.example.com/media/upload/image?post_id=7" \
+      -H "Authorization: Bearer <token>" \
+      -F "file=@/path/to/cover.jpg;type=image/jpeg"
+    ```
+
+    A successful response:
+
+    ```json
+    {
+      "id": 12,
+      "filename": "cover.jpg",
+      "original_size": 2048000,
+      "compressed_size": 1536000,
+      "url": "/portadas/12/base64"
+    }
+    ```
+
+    | Field             | Description                                  |
+    | ----------------- | -------------------------------------------- |
+    | `id`              | Media ID used for retrieval and deletion     |
+    | `filename`        | Original filename as uploaded                |
+    | `original_size`   | File size in bytes before compression        |
+    | `compressed_size` | File size in bytes after compression         |
+    | `url`             | Path to access the image in base64 format    |
+
+    Returns `400` if the file type is not allowed or if the file exceeds 10 MB.
+
+    ---
+
+    ## Retrieving an image
+
+    Returns the raw image bytes with the appropriate `Content-Type` header. No token required.
+
+    ```bash GET /media/image/{media_id}
+    curl -X GET "https://api.example.com/media/image/12" \
+      --output cover.jpg
+    ```
+
+    Returns `404` if the image does not exist.
+
+    ---
+
+    ## Deleting an image
+
+    Permanently removes the image from storage. Requires an admin token.
+
+    ```bash DELETE /media/image/delete-by-id
+    curl -X DELETE "https://api.example.com/media/image/delete-by-id?img_id=12" \
+      -H "Authorization: Bearer <token>"
+    ```
+
+    ```json
+    { "status": "ok", "message": "Video borrado correctamente" }
+    ```
+  </Tab>
+
+  <Tab title="Videos">
+    ## Uploading a video
+
+    Videos are attached to a post and stored in full. Large files are streamed back to the client in 1 MB chunks during retrieval.
+
+    **Allowed types:** MP4, WebM  
+    **Max size:** 50 MB  
+    **Requires:** admin token
+
+    ```bash POST /upload/video
+    curl -X POST "https://api.example.com/upload/video?post_id=7" \
+      -H "Authorization: Bearer <token>" \
+      -F "file=@/path/to/article-clip.mp4;type=video/mp4"
+    ```
+
+    A successful response:
+
+    ```json
+    {
+      "filename": "article-clip.mp4",
+      "result": { ... }
+    }
+    ```
+
+    Returns `400` if the file type is not in the allowed set or if the file exceeds 50 MB. Returns `404` if the `post_id` does not exist.
+
+    ---
+
+    ## Retrieving a video
+
+    Returns the video as a streaming response in 1 MB chunks. Includes `Content-Length` and `Accept-Ranges` headers for player compatibility. No token required.
+
+    ```bash GET /media/video/{video_id}
+    curl -X GET "https://api.example.com/media/video/3" \
+      --output article-clip.mp4
+    ```
+
+    Returns `404` if the video does not exist.
+
+    ---
+
+    ## Deleting a video
+
+    Permanently removes the video from storage. Requires an admin token.
+
+    ```bash DELETE /media/video/delete-by-id
+    curl -X DELETE "https://api.example.com/media/video/delete-by-id?video_id=3" \
+      -H "Authorization: Bearer <token>"
+    ```
+
+    ```json
+    { "status": "ok", "message": "Video borrado correctamente" }
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Limits at a glance
+
+<CardGroup cols={2}>
+  <Card title="Images" icon="image">
+    **Types:** JPEG, PNG, WebP, GIF  
+    **Max size:** 10 MB  
+    **Storage:** Compressed at quality 85  
+    **Endpoint:** `POST /media/upload/image`
+  </Card>
+  <Card title="Videos" icon="film">
+    **Types:** MP4, WebM  
+    **Max size:** 50 MB  
+    **Streaming:** 1 MB chunks  
+    **Endpoint:** `POST /upload/video`
+  </Card>
+</CardGroup>

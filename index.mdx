@@ -1,97 +1,54 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Periodico Backend"
+description: "A FastAPI-based REST API for managing a digital newspaper platform — posts, sections, users, and media."
 ---
 
-## Setting up
-
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Get the API running locally in minutes with a step-by-step guide.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Authentication" icon="shield-halved" href="/authentication">
+    Learn how JWT tokens work and how to authenticate requests.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="API Reference" icon="code" href="/api/posts/get-all">
+    Full endpoint documentation with parameters, responses, and examples.
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Admin Guide" icon="user-shield" href="/guides/admin-guide">
+    Manage posts, sections, and users with admin-level access.
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## Overview
 
-Everything you need to create world-class documentation.
+Periodico Backend is a REST API built with **FastAPI** and **MySQL** that powers a digital newspaper platform. It handles the full lifecycle of news content — from writing and publishing articles to serving media assets and managing user accounts.
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
+<CardGroup cols={3}>
+  <Card title="Posts" icon="newspaper" href="/concepts/posts">
+    Create, update, publish, and retrieve news articles organized by section and slug.
   </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
+  <Card title="Sections" icon="folder-open" href="/concepts/sections">
+    Organize content into named sections that categorize your news articles.
   </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
+  <Card title="Media" icon="photo-film" href="/concepts/media">
+    Upload and serve images and videos attached to posts with automatic compression.
   </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
+  <Card title="Users" icon="users" href="/guides/user-management">
+    Register users, authenticate via login, and manage account credentials.
   </Card>
-</Columns>
+  <Card title="Admin" icon="screwdriver-wrench" href="/guides/admin-guide">
+    Admin-protected endpoints for content management and user administration.
+  </Card>
+  <Card title="Security" icon="lock" href="/authentication">
+    JWT-based auth with bcrypt password hashing and role-based access control.
+  </Card>
+</CardGroup>
 
-## Need inspiration?
+## Key features
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+- **Compressed post bodies** — Article content is stored as zlib-compressed JSON and decompressed on read, reducing database storage.
+- **Section-based routing** — Posts are accessible by section name and URL slug: `GET /posts/{section}/{slug}`.
+- **Role-based access control** — Admin endpoints are protected by a `requireAdmin` dependency that checks the JWT payload.
+- **Media storage** — Images (JPEG, PNG, WebP, GIF up to 10 MB) and videos (MP4, WebM up to 50 MB) are stored as binary blobs in MySQL with streaming delivery.
+- **Image compression** — Uploaded images are automatically compressed before storage to reduce size.
+- **PDF to HTML** — Convert PDF files to HTML for use in article content via a dedicated admin endpoint.
+- **CORS enabled** — The API accepts cross-origin requests from any origin, suitable for integration with a frontend application.

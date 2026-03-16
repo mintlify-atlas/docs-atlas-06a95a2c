@@ -1,0 +1,130 @@
+---
+title: "Get posts by section"
+description: "Returns all posts belonging to a named section, ordered by creation date, newest first."
+---
+
+Looks up a section by its name, then returns all posts assigned to that section. The `body` field for each post is stored compressed and is automatically decompressed before being returned.
+
+<Note>This is a public endpoint. No authentication is required.</Note>
+
+## Request
+
+**GET** `/posts/get-all-by-section`
+
+## Parameters
+
+<ParamField query="section" type="string" required>
+  The exact name of the section. Must not be empty or whitespace-only. Section names are case-sensitive as stored in the database.
+</ParamField>
+
+## Example request
+
+<CodeGroup>
+
+```bash cURL
+curl --request GET \
+  --url "https://your-api-domain.com/posts/get-all-by-section?section=Politics"
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    "https://your-api-domain.com/posts/get-all-by-section",
+    params={"section": "Politics"}
+)
+data = response.json()
+```
+
+```javascript JavaScript
+const response = await fetch(
+  "https://your-api-domain.com/posts/get-all-by-section?section=Politics"
+);
+const data = await response.json();
+```
+
+</CodeGroup>
+
+## Response
+
+Returns an array of post objects belonging to the given section, ordered by `created_at` descending. Returns an empty array if the section exists but has no posts.
+
+<ResponseField name="" type="object[]">
+  Array of post objects.
+
+  <Expandable title="Post object properties" defaultOpen={true}>
+    <ResponseField name="id" type="number" required>
+      Unique identifier for the post.
+    </ResponseField>
+
+    <ResponseField name="title" type="string" required>
+      The headline or title of the post.
+    </ResponseField>
+
+    <ResponseField name="slug" type="string" required>
+      URL-friendly identifier derived from the title.
+    </ResponseField>
+
+    <ResponseField name="body" type="object" required>
+      Decompressed post content.
+
+      <Expandable title="body properties">
+        <ResponseField name="subtitulo" type="string">
+          A brief subtitle or summary for the article.
+        </ResponseField>
+
+        <ResponseField name="contenido_html" type="string">
+          Full article content as an HTML string.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+
+    <ResponseField name="user_id" type="number" required>
+      Identifier of the user (author) who created the post.
+    </ResponseField>
+
+    <ResponseField name="section_id" type="number" required>
+      Identifier of the section this post belongs to.
+    </ResponseField>
+
+    <ResponseField name="published" type="number" required>
+      Publication status. `1` indicates the post is published, `0` means unpublished.
+    </ResponseField>
+
+    <ResponseField name="created_at" type="string" required>
+      ISO 8601 timestamp of when the post was created.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example response
+
+```json 200
+[
+  {
+    "id": 4,
+    "title": "Senate Passes New Budget",
+    "slug": "senate-passes-new-budget",
+    "body": {
+      "subtitulo": "A landmark decision for fiscal policy",
+      "contenido_html": "<p>The senate voted 60-40 in favor...</p>"
+    },
+    "user_id": 2,
+    "section_id": 1,
+    "published": 1,
+    "created_at": "2024-01-15T09:00:00"
+  }
+]
+```
+
+## Error responses
+
+| Status | Description |
+|--------|-------------|
+| `404`  | The specified section name does not exist in the database. |
+| `422`  | The `section` parameter is missing, empty, or contains only whitespace. |
+| `500`  | Internal server error. The database may be unreachable. |
+
+<Tip>
+  Use the [GET /sections/get-all](/api/sections/get-all) endpoint to retrieve the list of valid section names before calling this endpoint.
+</Tip>

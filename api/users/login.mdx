@@ -1,0 +1,102 @@
+---
+title: "Login"
+description: "Authenticate with a Gmail address and password to receive a JWT access token."
+---
+
+`POST /users/login`
+
+Validates the user's credentials and returns a signed JWT token along with basic user information. All parameters are passed as query strings.
+
+<Note>
+  No authentication required. This endpoint is public.
+</Note>
+
+## Parameters
+
+<ParamField query="gmail" type="string" required>
+  The Gmail address associated with the account.
+</ParamField>
+
+<ParamField query="password" type="string" required>
+  The account password.
+</ParamField>
+
+## Example
+
+<CodeGroup>
+
+```bash cURL
+curl --request POST \
+  --url 'https://api.example.com/users/login?gmail=john%40example.com&password=Secret123'
+```
+
+</CodeGroup>
+
+## Response
+
+<ResponseField name="status" type="string" required>
+  Always `"ok"` on success.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Human-readable confirmation message.
+</ResponseField>
+
+<ResponseField name="token" type="string" required>
+  Signed JWT access token. Include this value in the `Authorization` header for protected endpoints.
+
+  - Algorithm: `HS256`
+  - Expires: 12 hours from issuance
+</ResponseField>
+
+<ResponseField name="user" type="object" required>
+  Basic user information.
+
+  <Expandable title="properties">
+    <ResponseField name="id" type="number" required>
+      Unique numeric user identifier.
+    </ResponseField>
+    <ResponseField name="username" type="string" required>
+      Display name of the user.
+    </ResponseField>
+    <ResponseField name="gmail" type="string" required>
+      Gmail address of the user.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```json 200 Success
+{
+  "status": "ok",
+  "message": "Login correcto",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": 1,
+    "username": "johndoe",
+    "gmail": "john@example.com"
+  }
+}
+```
+
+<Tip>
+  Store the returned token securely (e.g., in memory or `localStorage`) and attach it as `Authorization: Bearer <token>` on subsequent requests.
+</Tip>
+
+## Token payload
+
+The JWT contains the following claims:
+
+| Claim | Type | Description |
+| ----- | ---- | ----------- |
+| `id` | number | User's numeric ID |
+| `gmail` | string | User's Gmail address |
+| `username` | string | User's display name |
+| `admin` | boolean | Whether the user has admin privileges |
+| `exp` | number | Unix timestamp when the token expires |
+
+## Error codes
+
+| Code | Cause |
+| ---- | ----- |
+| `404` | No account is registered with the provided Gmail address. |
+| `401` | The password does not match the account's stored password. |

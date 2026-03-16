@@ -1,0 +1,63 @@
+---
+title: "Delete section"
+description: "Permanently delete a section by its ID."
+---
+
+<Warning>
+  Admin authentication is required. Include a valid `Authorization: Bearer <token>` header with admin privileges.
+</Warning>
+
+<Warning>
+  This operation is irreversible. Ensure all posts under this section are re-assigned or deleted before removing the section.
+</Warning>
+
+## Endpoint
+
+```
+DELETE /admin/delete-section
+```
+
+## Parameters
+
+<ParamField query="section_id" type="number" required>
+  The unique ID of the section to delete.
+</ParamField>
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for admin authentication. Format: `Bearer <token>`
+</ParamField>
+
+## Request example
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://api.example.com/admin/delete-section?section_id=5' \
+  --header 'Authorization: Bearer <your-admin-token>'
+```
+
+## Response
+
+**200 OK**
+
+<ResponseField name="status" type="string">
+  Always `"ok"` on success.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Human-readable confirmation message including the deleted section ID.
+</ResponseField>
+
+```json 200
+{
+  "status": "ok",
+  "message": "Sección con ID 5 eliminada correctamente"
+}
+```
+
+## Error codes
+
+| Status | Description |
+|--------|-------------|
+| `401`  | Missing or invalid authorization token. |
+| `403`  | Token is valid but the user does not have admin privileges. |
+| `404`  | No section found with the given `section_id`. |

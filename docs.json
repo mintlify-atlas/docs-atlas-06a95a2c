@@ -1,122 +1,101 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "Periodico Backend",
+  "theme": "sequoia",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#1a1a2e",
+    "light": "#2563eb",
+    "dark": "#0f172a"
   },
-  "favicon": "/favicon.svg",
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/nic0lasGP/periodicoBackend"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/nic0lasGP/periodicoBackend"
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Documentation",
         "groups": [
           {
-            "group": "Getting started",
-            "pages": [
-              "index",
-              "quickstart",
-              "development"
-            ]
+            "group": "Get Started",
+            "pages": ["introduction", "quickstart", "authentication"]
           },
           {
-            "group": "Customization",
-            "pages": [
-              "essentials/settings",
-              "essentials/navigation"
-            ]
+            "group": "Core Concepts",
+            "pages": ["concepts/posts", "concepts/sections", "concepts/media"]
           },
           {
-            "group": "Writing content",
-            "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
-            ]
-          },
-          {
-            "group": "AI tools",
-            "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
-            ]
+            "group": "Guides",
+            "pages": ["guides/admin-guide", "guides/user-management", "guides/media-upload"]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "API Reference",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Posts",
             "pages": [
-              "api-reference/introduction"
+              "api/posts/get-all",
+              "api/posts/get-by-id",
+              "api/posts/get-by-section",
+              "api/posts/get-by-slug"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Sections",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api/sections/get-all",
+              "api/sections/get-by-id",
+              "api/sections/get-by-name"
+            ]
+          },
+          {
+            "group": "Users",
+            "pages": [
+              "api/users/register",
+              "api/users/login",
+              "api/users/me",
+              "api/users/get-by-id",
+              "api/users/change-password",
+              "api/users/delete",
+              "api/users/verify-token"
+            ]
+          },
+          {
+            "group": "Media",
+            "pages": [
+              "api/media/upload-image",
+              "api/media/get-image",
+              "api/media/delete-image",
+              "api/media/upload-video",
+              "api/media/get-video",
+              "api/media/delete-video"
+            ]
+          },
+          {
+            "group": "Admin",
+            "pages": [
+              "api/admin/get-all-users",
+              "api/admin/create-post",
+              "api/admin/update-post",
+              "api/admin/delete-post",
+              "api/admin/toggle-publish",
+              "api/admin/create-section",
+              "api/admin/delete-section",
+              "api/admin/delete-user",
+              "api/admin/pdf-to-html"
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
+    ]
   }
 }

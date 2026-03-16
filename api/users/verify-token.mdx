@@ -1,0 +1,64 @@
+---
+title: "Verify token"
+description: "Check whether a JWT access token is valid and retrieve its claims."
+---
+
+`GET /user/verify-token`
+
+Validates the provided Bearer token and returns its core claims if the token is authentic and has not expired.
+
+<Warning>
+  This endpoint requires authentication. A valid Bearer token must be provided in the `Authorization` header.
+</Warning>
+
+## Authentication
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token obtained from the [login](/api/users/login) endpoint.
+
+  Format: `Bearer <token>`
+</ParamField>
+
+## Example
+
+<CodeGroup>
+
+```bash cURL
+curl --request GET \
+  --url 'https://api.example.com/user/verify-token' \
+  --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+```
+
+</CodeGroup>
+
+## Response
+
+<ResponseField name="valid" type="boolean" required>
+  Always `true` when the token passes validation. An invalid or expired token results in a `401` error rather than a `false` value here.
+</ResponseField>
+
+<ResponseField name="user_id" type="number" required>
+  The numeric ID of the authenticated user, extracted from the token's `id` claim.
+</ResponseField>
+
+<ResponseField name="expires" type="number" required>
+  Unix timestamp indicating when the token expires, extracted from the token's `exp` claim.
+</ResponseField>
+
+```json 200 Success
+{
+  "valid": true,
+  "user_id": 1,
+  "expires": 1705399800
+}
+```
+
+<Tip>
+  Use this endpoint to check token validity on the client side before making sensitive requests, or to display the session expiry time to the user.
+</Tip>
+
+## Error codes
+
+| Code | Cause |
+| ---- | ----- |
+| `401` | Token is missing, malformed, or has expired. |

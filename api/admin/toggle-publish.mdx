@@ -1,0 +1,75 @@
+---
+title: "Toggle publish state"
+description: "Toggle the published/unpublished state of a post. If the post is currently published, it becomes unpublished, and vice versa."
+---
+
+<Warning>
+  Admin authentication is required. Include a valid `Authorization: Bearer <token>` header with admin privileges.
+</Warning>
+
+## Endpoint
+
+```
+PATCH /admin/alternate-publish-state-post
+```
+
+## Parameters
+
+<ParamField query="id" type="number" required>
+  The unique ID of the post whose publish state should be toggled.
+</ParamField>
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for admin authentication. Format: `Bearer <token>`
+</ParamField>
+
+<Note>
+  The endpoint reads the current publish state of the post before toggling. The `status` field in the response reflects the **previous** state — not the new one. A status of `0` means the post was unpublished and is now published. A status of `1` means the post was published and is now unpublished.
+</Note>
+
+## Request example
+
+```bash cURL
+curl --request PATCH \
+  --url 'https://api.example.com/admin/alternate-publish-state-post?id=42' \
+  --header 'Authorization: Bearer <your-admin-token>'
+```
+
+## Response
+
+**200 OK**
+
+<ResponseField name="status" type="number">
+  The **previous** publish state of the post before the toggle was applied.
+  - `0` — post was unpublished; it is now published.
+  - `1` — post was published; it is now unpublished.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Human-readable description of the action taken.
+</ResponseField>
+
+<CodeGroup>
+
+```json Post published (was unpublished)
+{
+  "status": 0,
+  "message": "Post publicado correctamente"
+}
+```
+
+```json Post unpublished (was published)
+{
+  "status": 1,
+  "message": "Post despublicado correctamente"
+}
+```
+
+</CodeGroup>
+
+## Error codes
+
+| Status | Description |
+|--------|-------------|
+| `401`  | Missing or invalid authorization token. |
+| `403`  | Token is valid but the user does not have admin privileges. |

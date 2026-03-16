@@ -1,0 +1,193 @@
+---
+title: "Media"
+description: "Images and videos are attached to posts and stored as binary blobs, with automatic image compression and chunked video streaming."
+---
+
+Periodico stores media — cover images and embedded videos — as binary blobs in MySQL, directly associated with posts. Images are compressed on upload. Videos are served via chunked streaming. All uploads require admin authentication; reads are public.
+
+## Images
+
+### Constraints
+
+| Property | Value |
+|----------|-------|
+| Allowed types | `image/jpeg`, `image/png`, `image/webp`, `image/gif` |
+| Maximum size | 10 MB |
+| Compression | Automatic, quality 85 |
+
+Images are compressed server-side before storage using `compressImage()` at quality 85. The original file is never stored. Both the original size and compressed size are returned in the upload response so you can measure the savings.
+
+### Upload an image
+
+Send a `multipart/form-data` request to attach a cover image to a post:
+
+```
+POST /media/upload/image?post_id={post_id}
+```
+
+<ParamField query="post_id" type="integer" required>
+  ID of the post to attach the image to.
+</ParamField>
+
+<Warning>
+  Requires admin authentication. Include a valid bearer token in the `Authorization` header.
+</Warning>
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST "https://api.example.com/media/upload/image?post_id=42" \
+  -H "Authorization: Bearer <token>" \
+  -F "file=@/path/to/cover.jpg"
+```
+
+```python Python
+import requests
+
+with open("/path/to/cover.jpg", "rb") as f:
+    response = requests.post(
+        "https://api.example.com/media/upload/image",
+        params={"post_id": 42},
+        headers={"Authorization": "Bearer <token>"},
+        files={"file": f},
+    )
+print(response.json())
+```
+
+</CodeGroup>
+
+### Upload response
+
+<ResponseField name="id" type="integer" required>
+  Auto-incremented ID of the stored media record.
+</ResponseField>
+
+<ResponseField name="filename" type="string" required>
+  Original filename as submitted by the client.
+</ResponseField>
+
+<ResponseField name="original_size" type="integer" required>
+  Size of the uploaded file in bytes before compression.
+</ResponseField>
+
+<ResponseField name="compressed_size" type="integer" required>
+  Size of the stored (compressed) image in bytes.
+</ResponseField>
+
+<ResponseField name="url" type="string" required>
+  Relative URL to retrieve the image as a base64-encoded payload: `/portadas/{id}/base64`.
+</ResponseField>
+
+```json upload response
+{
+  "id": 17,
+  "filename": "cover.jpg",
+  "original_size": 2048576,
+  "compressed_size": 891023,
+  "url": "/portadas/17/base64"
+}
+```
+
+### Retrieve an image
+
+```
+GET /media/image/{media_id}
+```
+
+Returns the raw binary image data with the appropriate `Content-Type` header set to the original MIME type.
+
+```bash cURL
+curl "https://api.example.com/media/image/17" --output cover.jpg
+```
+
+<Tip>
+  To embed a cover image directly in a browser without a separate download step, use the base64 URL returned in the upload response: `/portadas/{id}/base64`.
+</Tip>
+
+---
+
+## Videos
+
+### Constraints
+
+| Property | Value |
+|----------|-------|
+| Allowed types | `video/mp4`, `video/webm` |
+| Maximum size | 50 MB |
+| Delivery | Chunked streaming, 1 MB chunks |
+
+Videos are stored as binary blobs and served using FastAPI's `StreamingResponse` with support for HTTP range requests (`Accept-Ranges`). This allows browsers and media players to seek within a video without downloading the entire file.
+
+### Upload a video
+
+```
+POST /upload/video?post_id={post_id}
+```
+
+<ParamField query="post_id" type="integer" required>
+  ID of the post to attach the video to.
+</ParamField>
+
+<Warning>
+  Requires admin authentication. Video files are validated for both MIME type and size before storage. Requests exceeding 50 MB or using an unsupported format are rejected.
+</Warning>
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST "https://api.example.com/upload/video?post_id=42" \
+  -H "Authorization: Bearer <token>" \
+  -F "file=@/path/to/video.mp4"
+```
+
+```python Python
+import requests
+
+with open("/path/to/video.mp4", "rb") as f:
+    response = requests.post(
+        "https://api.example.com/upload/video",
+        params={"post_id": 42},
+        headers={"Authorization": "Bearer <token>"},
+        files={"file": f},
+    )
+print(response.json())
+```
+
+</CodeGroup>
+
+### Stream a video
+
+```
+GET /media/video/{video_id}
+```
+
+Returns a `StreamingResponse`. The server delivers content in 1 MB chunks and sets `Accept-Ranges: bytes` so clients can issue range requests for seeking.
+
+```bash cURL
+curl "https://api.example.com/media/video/5" --output video.mp4
+```
+
+<Note>
+  Standard HTML5 `<video>` elements handle range requests automatically. Point the `src` attribute at the video URL and the browser will manage buffering and seeking.
+</Note>
+
+---
+
+## Access control summary
+
+<CardGroup cols={2}>
+  <Card title="Upload (admin only)" icon="lock">
+    `POST /media/upload/image`
+
+    `POST /upload/video`
+
+    Requires a valid admin bearer token.
+  </Card>
+  <Card title="Read (public)" icon="eye">
+    `GET /media/image/{media_id}`
+
+    `GET /media/video/{video_id}`
+
+    No authentication required.
+  </Card>
+</CardGroup>

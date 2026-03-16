@@ -1,0 +1,142 @@
+---
+title: "Sections"
+description: "Named categories that organize posts into topics such as Politics, Sports, or Technology."
+---
+
+A **section** is a named category used to group related posts. Every post belongs to exactly one section. Sections are the primary organizational axis of the platform — they appear in post URLs and are used to filter content by topic.
+
+## Data model
+
+<ResponseField name="id" type="integer" required>
+  Auto-incremented primary key.
+</ResponseField>
+
+<ResponseField name="name" type="string" required>
+  Human-readable section name (e.g., `"Politics"`, `"Sports"`, `"Technology"`). Used as the section segment in post URLs.
+</ResponseField>
+
+## Example section object
+
+```json section response
+{
+  "id": 1,
+  "name": "Politics"
+}
+```
+
+## Relationship to posts
+
+Posts reference their parent section via a `section_id` foreign key. The section name is also used directly in the post URL path:
+
+```
+GET /posts/{section}/{slug}
+```
+
+When fetching posts by section name, the API resolves the name to an ID internally:
+
+```python app/routers/posts.py
+def get_post_by_seccion(section: str):
+    idsection = getIdSectionByName(section)
+    if idsection is None:
+        raise HTTPException(status_code=404, detail="La sección no existe")
+    results = getPostbySectionId(idsection)
+```
+
+<Note>
+  Section names are case-sensitive in lookups. Pass the name exactly as stored (e.g., `Politics`, not `politics`).
+</Note>
+
+## Fetching posts by section
+
+To retrieve all posts in a section, use the section name as a query parameter:
+
+```
+GET /posts/get-all-by-section?section={name}
+```
+
+**Possible errors:**
+
+| Status | Condition |
+|--------|-----------|
+| `422`  | The `section` query parameter is empty or whitespace-only. |
+| `404`  | No section with the given name exists. |
+
+```bash cURL example
+curl "https://api.example.com/posts/get-all-by-section?section=Politics"
+```
+
+## Read endpoints (public)
+
+All section read endpoints are publicly accessible — no authentication required.
+
+<CardGroup cols={3}>
+  <Card title="Get all sections" icon="list">
+    `GET /sections/get-all`
+
+    Returns an array of all sections.
+  </Card>
+  <Card title="Get by ID" icon="hash">
+    `GET /sections/get-by-id?id={id}`
+
+    Returns a single section by numeric ID.
+  </Card>
+  <Card title="Get by name" icon="tag">
+    `GET /sections/get-by-name?name={name}`
+
+    Returns a single section by its name.
+  </Card>
+</CardGroup>
+
+### Get all sections
+
+```bash cURL
+curl "https://api.example.com/sections/get-all"
+```
+
+```json response
+[
+  { "id": 1, "name": "Politics" },
+  { "id": 2, "name": "Sports" },
+  { "id": 3, "name": "Technology" }
+]
+```
+
+### Get by ID
+
+```bash cURL
+curl "https://api.example.com/sections/get-by-id?id=2"
+```
+
+```json response
+{ "id": 2, "name": "Sports" }
+```
+
+### Get by name
+
+```bash cURL
+curl "https://api.example.com/sections/get-by-name?name=Technology"
+```
+
+```json response
+{ "id": 3, "name": "Technology" }
+```
+
+## Write endpoints (admin-only)
+
+Creating and deleting sections requires admin authentication. Pass a valid bearer token in the `Authorization` header.
+
+<Warning>
+  Deleting a section that has associated posts will leave those posts without a valid section reference. Reassign or remove the posts before deleting their section.
+</Warning>
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/admin/create-section` | Create a new section. |
+| `DELETE` | `/admin/delete-section` | Delete a section by ID. |
+
+```bash create a section
+curl -X POST "https://api.example.com/admin/create-section" \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Culture"}'
+```

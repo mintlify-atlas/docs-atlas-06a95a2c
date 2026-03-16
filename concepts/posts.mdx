@@ -1,0 +1,239 @@
+---
+title: "Posts"
+description: "The core content unit of the Periodico platform — what gets written, published, and read."
+---
+
+A **post** is the fundamental content unit in Periodico. Every article, news item, or story is a post. Posts belong to a section, are authored by a user, and carry a body containing a subtitle and HTML content. Body content is compressed before storage and decompressed transparently on read.
+
+## Data model
+
+<ResponseField name="id" type="integer" required>
+  Auto-incremented primary key.
+</ResponseField>
+
+<ResponseField name="title" type="string" required>
+  Display title of the post.
+</ResponseField>
+
+<ResponseField name="slug" type="string" required>
+  URL-safe identifier used to address the post within its section. Must be unique per section.
+</ResponseField>
+
+<ResponseField name="body" type="object" required>
+  Decompressed on read. See [body structure](#body-structure) below.
+
+  <Expandable title="body properties">
+    <ResponseField name="subtitulo" type="string" required>
+      Subtitle or deck text displayed beneath the headline.
+    </ResponseField>
+    <ResponseField name="contenido_html" type="string" required>
+      Full article body as an HTML string.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="user_id" type="integer" required>
+  ID of the author (admin user) who created the post.
+</ResponseField>
+
+<ResponseField name="section_id" type="integer" required>
+  ID of the section this post belongs to.
+</ResponseField>
+
+<ResponseField name="published" type="integer" required>
+  Publish state. `0` = draft, `1` = published. Toggled by admins via the alternate-publish-state endpoint.
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  Timestamp set automatically by the database on insert.
+</ResponseField>
+
+## Body structure
+
+The `body` field is a JSON object with two keys:
+
+```json body example
+{
+  "subtitulo": "A brief summary shown under the headline",
+  "contenido_html": "<p>Full article content in HTML.</p>"
+}
+```
+
+### Compression pipeline
+
+Body content is never stored as plain text. Before insert or update, the API serializes the body object to JSON, encodes it as UTF-8, and compresses it with zlib at level 9. The process is reversed on every read.
+
+<Steps>
+  <Step title="Serialize">
+    The `Body` Pydantic model is serialized to a JSON string using `model_dump_json()`.
+  </Step>
+  <Step title="Encode">
+    The JSON string is encoded to UTF-8 bytes.
+  </Step>
+  <Step title="Compress">
+    The bytes are compressed with `zlib.compress(..., level=9)` before being written to the database.
+  </Step>
+  <Step title="Decompress on read">
+    On every read endpoint, the stored bytes are passed through `zlib.decompress()` and then `json.loads()` before being returned in the response.
+  </Step>
+</Steps>
+
+<Note>
+  Clients always receive the body as a plain JSON object — compression is fully transparent to API consumers.
+</Note>
+
+## URL structure
+
+Posts are addressed by section name and slug:
+
+```
+GET /posts/{section}/{slug}
+```
+
+For example, a post with slug `election-results` in the `politics` section is fetched at:
+
+```
+GET /posts/politics/election-results
+```
+
+The API resolves the section name to an ID internally. A `404` is returned if either the section or the slug does not exist within that section.
+
+## Published state
+
+Posts start unpublished (`published = 0`). Admins toggle the state using:
+
+```
+PATCH /admin/alternate-publish-state-post?id={post_id}
+```
+
+Each call flips the current state — from `0` to `1` or from `1` to `0`. No request body is required.
+
+<Warning>
+  There is no separate publish or unpublish endpoint. Calling this endpoint always toggles, so calling it twice returns the post to its original state.
+</Warning>
+
+## Example response
+
+A fully hydrated post returned by any read endpoint:
+
+```json post response
+{
+  "id": 42,
+  "title": "Election Results 2026",
+  "slug": "election-results-2026",
+  "body": {
+    "subtitulo": "A historic night as incumbents sweep all major races",
+    "contenido_html": "<p>Voters turned out in record numbers...</p>"
+  },
+  "user_id": 3,
+  "section_id": 1,
+  "published": 1,
+  "created_at": "2026-03-16T10:00:00"
+}
+```
+
+## Creating a post
+
+Post creation requires admin authentication. Send a `POST` request to `/admin/create-post` with the following body:
+
+<ParamField body="title" type="string" required>
+  Display title of the post.
+</ParamField>
+
+<ParamField body="slug" type="string" required>
+  URL-safe slug. Must be unique within the target section.
+</ParamField>
+
+<ParamField body="body" type="object" required>
+  The post body object. Compressed automatically before storage.
+</ParamField>
+
+<ParamField body="body.subtitulo" type="string" required>
+  Subtitle or deck text.
+</ParamField>
+
+<ParamField body="body.contenido_html" type="string" required>
+  Full article content as an HTML string.
+</ParamField>
+
+<ParamField body="user_id" type="integer" required>
+  ID of the authoring admin user.
+</ParamField>
+
+<ParamField body="section_id" type="integer" required>
+  ID of the section to assign the post to.
+</ParamField>
+
+<CodeGroup>
+
+```json request body
+{
+  "title": "Election Results 2026",
+  "slug": "election-results-2026",
+  "body": {
+    "subtitulo": "A historic night as incumbents sweep all major races",
+    "contenido_html": "<p>Voters turned out in record numbers...</p>"
+  },
+  "user_id": 3,
+  "section_id": 1
+}
+```
+
+```bash cURL
+curl -X POST https://api.example.com/admin/create-post \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Election Results 2026",
+    "slug": "election-results-2026",
+    "body": {
+      "subtitulo": "A historic night as incumbents sweep all major races",
+      "contenido_html": "<p>Voters turned out in record numbers...</p>"
+    },
+    "user_id": 3,
+    "section_id": 1
+  }'
+```
+
+</CodeGroup>
+
+## Updating a post
+
+Use `PATCH /admin/update-post` to modify an existing post. The request body follows the `PostUpdate` model:
+
+<ParamField body="post_id" type="integer" required>
+  ID of the post to update.
+</ParamField>
+
+<ParamField body="title" type="string" required>
+  New title.
+</ParamField>
+
+<ParamField body="slug" type="string" required>
+  New slug.
+</ParamField>
+
+<ParamField body="body" type="object" required>
+  Updated body object. Re-compressed on write.
+</ParamField>
+
+<ParamField body="section_id" type="integer" required>
+  New section assignment.
+</ParamField>
+
+## Read endpoints
+
+<CardGroup cols={2}>
+  <Card title="Get all posts" icon="list">
+    `GET /posts/get-all` — Returns every post in the database with decompressed bodies.
+  </Card>
+  <Card title="Get by ID" icon="hash">
+    `GET /posts/get-by-id?id={id}` — Returns a single post by its numeric ID.
+  </Card>
+  <Card title="Get by section" icon="folder">
+    `GET /posts/get-all-by-section?section={name}` — Returns all posts within a named section. Returns `404` if the section name does not exist.
+  </Card>
+  <Card title="Get by section and slug" icon="link">
+    `GET /posts/{section}/{slug}` — Canonical post URL. Returns `404` if either part is not found.
+  </Card>
+</CardGroup>

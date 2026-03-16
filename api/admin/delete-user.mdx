@@ -1,0 +1,127 @@
+---
+title: "Delete user"
+description: "Permanently delete a user account. Two variants are available: delete by Gmail address or delete by user ID."
+---
+
+<Warning>
+  Admin authentication is required. Include a valid `Authorization: Bearer <token>` header with admin privileges.
+</Warning>
+
+<Warning>
+  User deletion is irreversible. The account and all associated data cannot be recovered.
+</Warning>
+
+## Endpoints
+
+<Tabs>
+  <Tab title="Delete by Gmail">
+
+    ```
+    DELETE /admin/delete-user-by-gmail
+    ```
+
+    Delete a user account identified by their Gmail address.
+
+    ### Parameters
+
+    <ParamField query="gmail" type="string" required>
+      The Gmail address of the user to delete.
+    </ParamField>
+
+    <ParamField header="Authorization" type="string" required>
+      Bearer token for admin authentication. Format: `Bearer <token>`
+    </ParamField>
+
+    ### Request example
+
+    ```bash cURL
+    curl --request DELETE \
+      --url 'https://api.example.com/admin/delete-user-by-gmail?gmail=john%40example.com' \
+      --header 'Authorization: Bearer <your-admin-token>'
+    ```
+
+    ### Response
+
+    **200 OK**
+
+    <ResponseField name="status" type="string">
+      Always `"ok"` on success.
+    </ResponseField>
+
+    <ResponseField name="message" type="string">
+      Human-readable confirmation message including the deleted Gmail address.
+    </ResponseField>
+
+    ```json 200
+    {
+      "status": "ok",
+      "message": "Usuario 'john@example.com' eliminado correctamente"
+    }
+    ```
+
+    ### Error codes
+
+    | Status | Description |
+    |--------|-------------|
+    | `401`  | Missing or invalid authorization token. |
+    | `403`  | Token is valid but the user does not have admin privileges. |
+    | `404`  | No user found with the given Gmail address. |
+    | `500`  | User was found but could not be deleted. |
+
+  </Tab>
+  <Tab title="Delete by ID">
+
+    ```
+    DELETE /admin/delete-user-by-id
+    ```
+
+    Delete a user account identified by their numeric user ID.
+
+    ### Parameters
+
+    <ParamField query="id" type="number" required>
+      The unique numeric ID of the user to delete.
+    </ParamField>
+
+    <ParamField header="Authorization" type="string" required>
+      Bearer token for admin authentication. Format: `Bearer <token>`
+    </ParamField>
+
+    ### Request example
+
+    ```bash cURL
+    curl --request DELETE \
+      --url 'https://api.example.com/admin/delete-user-by-id?id=1' \
+      --header 'Authorization: Bearer <your-admin-token>'
+    ```
+
+    ### Response
+
+    **200 OK**
+
+    <ResponseField name="status" type="string">
+      Always `"ok"` on success.
+    </ResponseField>
+
+    <ResponseField name="message" type="string">
+      Human-readable confirmation message including the deleted user ID.
+    </ResponseField>
+
+    ```json 200
+    {
+      "status": "ok",
+      "message": "Usuario '1' eliminado correctamente"
+    }
+    ```
+
+    ### Error codes
+
+    | Status | Description |
+    |--------|-------------|
+    | `401`  | Missing or invalid authorization token. |
+    | `403`  | Token is valid but the user does not have admin privileges. |
+    | `404`  | No user found with the given `id`. |
+    | `500`  | User was found but could not be deleted. |
+
+  </Tab>
+</Tabs>

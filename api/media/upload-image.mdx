@@ -1,0 +1,88 @@
+---
+title: "Upload image"
+description: "Upload an image file and associate it with a post. The image is automatically compressed before storage."
+---
+
+<Warning>
+  Admin authentication is required. Include a valid `Authorization: Bearer <token>` header with admin privileges.
+</Warning>
+
+## Endpoint
+
+```
+POST /media/upload/image
+```
+
+## Parameters
+
+<ParamField query="post_id" type="number" required>
+  The ID of the post to associate the image with.
+</ParamField>
+
+<ParamField body="file" type="file" required>
+  The image file to upload. Must be sent as `multipart/form-data`.
+
+  **Allowed types:** `image/jpeg`, `image/png`, `image/webp`, `image/gif`
+
+  **Max size:** 10 MB
+</ParamField>
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for admin authentication. Format: `Bearer <token>`
+</ParamField>
+
+<Note>
+  Images are compressed at quality=85 before being stored. The response includes both the original and compressed file sizes so you can observe the savings.
+</Note>
+
+## Request example
+
+```bash cURL
+curl --request POST \
+  --url 'https://api.example.com/media/upload/image?post_id=42' \
+  --header 'Authorization: Bearer <your-admin-token>' \
+  --form 'file=@/path/to/image.jpg'
+```
+
+## Response
+
+**200 OK**
+
+<ResponseField name="id" type="number">
+  The unique identifier assigned to the uploaded image.
+</ResponseField>
+
+<ResponseField name="filename" type="string">
+  Original filename of the uploaded image.
+</ResponseField>
+
+<ResponseField name="original_size" type="number">
+  Size of the original file in bytes before compression.
+</ResponseField>
+
+<ResponseField name="compressed_size" type="number">
+  Size of the stored file in bytes after compression.
+</ResponseField>
+
+<ResponseField name="url" type="string">
+  URL path where the image can be retrieved. Format: `/portadas/{id}/base64`
+</ResponseField>
+
+```json 200
+{
+  "id": 15,
+  "filename": "cover.jpg",
+  "original_size": 2048000,
+  "compressed_size": 874320,
+  "url": "/portadas/15/base64"
+}
+```
+
+## Error codes
+
+| Status | Description |
+|--------|-------------|
+| `400`  | File type not allowed (only `image/jpeg`, `image/png`, `image/webp`, `image/gif` are accepted). |
+| `400`  | File exceeds the 10 MB size limit. |
+| `401`  | Missing or invalid authorization token. |
+| `403`  | Token is valid but the user does not have admin privileges. |

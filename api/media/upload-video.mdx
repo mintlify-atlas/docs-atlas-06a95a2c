@@ -1,0 +1,70 @@
+---
+title: "Upload video"
+description: "Upload a video file and associate it with an existing post."
+---
+
+<Warning>
+  Admin authentication is required. Include a valid `Authorization: Bearer <token>` header with admin privileges.
+</Warning>
+
+## Endpoint
+
+```
+POST /upload/video
+```
+
+## Parameters
+
+<ParamField query="post_id" type="number" required>
+  The ID of the post to associate the video with. The post must already exist.
+</ParamField>
+
+<ParamField body="file" type="file" required>
+  The video file to upload. Must be sent as `multipart/form-data`.
+
+  **Allowed types:** `video/mp4`, `video/webm`
+
+  **Max size:** 50 MB
+</ParamField>
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for admin authentication. Format: `Bearer <token>`
+</ParamField>
+
+## Request example
+
+```bash cURL
+curl --request POST \
+  --url 'https://api.example.com/upload/video?post_id=42' \
+  --header 'Authorization: Bearer <your-admin-token>' \
+  --form 'file=@/path/to/video.mp4'
+```
+
+## Response
+
+**200 OK**
+
+<ResponseField name="filename" type="string">
+  Original filename of the uploaded video.
+</ResponseField>
+
+<ResponseField name="result" type="object">
+  The raw result returned by the video storage service.
+</ResponseField>
+
+```json 200
+{
+  "filename": "intro.mp4",
+  "result": {}
+}
+```
+
+## Error codes
+
+| Status | Description |
+|--------|-------------|
+| `400`  | File type not allowed (only `video/mp4` and `video/webm` are accepted). |
+| `400`  | File exceeds the 50 MB size limit. |
+| `401`  | Missing or invalid authorization token. |
+| `403`  | Token is valid but the user does not have admin privileges. |
+| `404`  | No post found with the given `post_id`. |

@@ -1,0 +1,64 @@
+---
+title: "Create section"
+description: "Create a new content section that posts can be published under."
+---
+
+<Warning>
+  Admin authentication is required. Include a valid `Authorization: Bearer <token>` header with admin privileges.
+</Warning>
+
+## Endpoint
+
+```
+POST /admin/create-section
+```
+
+## Parameters
+
+<ParamField query="name" type="string" required>
+  The display name for the new section. Must not be empty or contain only whitespace.
+</ParamField>
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for admin authentication. Format: `Bearer <token>`
+</ParamField>
+
+## Request example
+
+```bash cURL
+curl --request POST \
+  --url 'https://api.example.com/admin/create-section?name=Politics' \
+  --header 'Authorization: Bearer <your-admin-token>'
+```
+
+## Response
+
+**200 OK**
+
+<ResponseField name="status" type="string">
+  Always `"ok"` on success.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Human-readable confirmation message.
+</ResponseField>
+
+<ResponseField name="id" type="number">
+  The unique ID assigned to the newly created section.
+</ResponseField>
+
+```json 200
+{
+  "status": "ok",
+  "message": "Sección creada correctamente",
+  "id": 5
+}
+```
+
+## Error codes
+
+| Status | Description |
+|--------|-------------|
+| `401`  | Missing or invalid authorization token. |
+| `403`  | Token is valid but the user does not have admin privileges. |
+| `422`  | The `name` parameter is missing, empty, or contains only whitespace. |

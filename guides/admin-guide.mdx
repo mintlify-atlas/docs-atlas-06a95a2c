@@ -1,0 +1,174 @@
+---
+title: "Admin guide"
+description: "How to use admin-only endpoints to manage posts, sections, users, and media on the Periodico platform."
+---
+
+Admin endpoints control all write operations on the platform — creating and updating posts, managing sections, and deleting users. Every request to an admin endpoint must include a valid JWT with `admin: true` in its payload.
+
+<Warning>
+  Admin privileges are **not** granted through any API endpoint. An administrator must manually set the `admin` column to `true` (or `1`) in the database for the target user row. There is no self-service or API-based promotion to admin.
+</Warning>
+
+## Getting an admin token
+
+Once your account has been promoted in the database, log in normally to receive a token that carries admin claims.
+
+```bash login as admin
+curl -X POST "https://api.example.com/users/login?gmail=admin@example.com&password=YourPassword1"
+```
+
+The response includes a `token` field. Use it as a Bearer token in all subsequent admin requests:
+
+```bash
+Authorization: Bearer <token>
+```
+
+---
+
+## User management
+
+### List all users
+
+Returns every registered user in the system.
+
+```bash GET /admin/users
+curl -X GET "https://api.example.com/admin/users" \
+  -H "Authorization: Bearer <token>"
+```
+
+### Delete user by Gmail
+
+```bash DELETE /admin/delete-user-by-gmail
+curl -X DELETE "https://api.example.com/admin/delete-user-by-gmail?gmail=user@example.com" \
+  -H "Authorization: Bearer <token>"
+```
+
+### Delete user by ID
+
+```bash DELETE /admin/delete-user-by-id
+curl -X DELETE "https://api.example.com/admin/delete-user-by-id?id=42" \
+  -H "Authorization: Bearer <token>"
+```
+
+<Note>
+  If the user does not exist, both delete endpoints return `404`. If deletion fails unexpectedly, a `500` is returned.
+</Note>
+
+---
+
+## Post management
+
+### Create a post
+
+Posts require a `body` object (the article content), a valid `user_id`, a valid `section_id`, and a URL-friendly `slug`. The body is compressed with zlib before storage.
+
+```bash POST /admin/create-post
+curl -X POST "https://api.example.com/admin/create-post" \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Breaking news: FastAPI 1.0 released",
+    "slug": "breaking-news-fastapi-1-0-released",
+    "user_id": 1,
+    "section_id": 3,
+    "body": {
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The FastAPI team has announced version 1.0 today."
+        }
+      ]
+    }
+  }'
+```
+
+Returns `404` if either `user_id` or `section_id` does not exist.
+
+### Update a post
+
+All fields (`title`, `body`, `section_id`, `slug`) are replaced in full. Supply the `post_id` of the post to update.
+
+```bash PATCH /admin/update-post
+curl -X PATCH "https://api.example.com/admin/update-post" \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "post_id": 7,
+    "title": "Updated: FastAPI 1.0 is now stable",
+    "slug": "updated-fastapi-1-0-stable",
+    "section_id": 3,
+    "body": {
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "FastAPI 1.0 has reached stable status after extensive testing."
+        }
+      ]
+    }
+  }'
+```
+
+Returns `404` if the post does not exist.
+
+### Toggle publish state
+
+Alternates the publish state of a post between published (`1`) and unpublished (`0`). Each call reads the current state and flips it.
+
+```bash PATCH /admin/alternate-publish-state-post
+curl -X PATCH "https://api.example.com/admin/alternate-publish-state-post?id=7" \
+  -H "Authorization: Bearer <token>"
+```
+
+The response includes `status` (the **previous** state before the toggle) and a descriptive `message`.
+
+### Delete a post
+
+```bash DELETE /admin/delete-post
+curl -X DELETE "https://api.example.com/admin/delete-post?id=7" \
+  -H "Authorization: Bearer <token>"
+```
+
+---
+
+## Section management
+
+Sections are the top-level categories that group posts (e.g., "Politics", "Sports", "Technology").
+
+### Create a section
+
+```bash POST /admin/create-section
+curl -X POST "https://api.example.com/admin/create-section?name=Technology" \
+  -H "Authorization: Bearer <token>"
+```
+
+Returns `422` if the `name` parameter is empty or only whitespace. On success, the response includes the new section's `id`.
+
+### Delete a section
+
+```bash DELETE /admin/delete-section
+curl -X DELETE "https://api.example.com/admin/delete-section?section_id=5" \
+  -H "Authorization: Bearer <token>"
+```
+
+Returns `404` if the section does not exist.
+
+<Warning>
+  Deleting a section may affect posts assigned to it. Verify there are no active posts in the section before deleting.
+</Warning>
+
+---
+
+## PDF to HTML conversion
+
+Converts an uploaded PDF file to HTML markup. This endpoint does **not** require an admin token — any request with a valid PDF file is accepted.
+
+```bash POST /convert/pdf-to-html
+curl -X POST "https://api.example.com/convert/pdf-to-html" \
+  -F "file=@/path/to/article.pdf;type=application/pdf"
+```
+
+Returns `400` if the uploaded file is not a PDF. On success, returns an `html` string containing the converted content.
+
+<Tip>
+  Use this endpoint to convert formatted article drafts into HTML before embedding them as post body content.
+</Tip>

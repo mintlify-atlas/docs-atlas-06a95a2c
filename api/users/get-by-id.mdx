@@ -1,0 +1,71 @@
+---
+title: "Get user by ID"
+description: "Retrieve a user's public profile by their numeric ID."
+---
+
+`GET /users/get-by-id`
+
+Looks up a user account by its numeric ID and returns the public profile. The user's password is never included in the response.
+
+<Note>
+  No authentication required. This endpoint is public.
+</Note>
+
+## Parameters
+
+<ParamField query="id" type="number" required>
+  The numeric ID of the user to retrieve.
+</ParamField>
+
+## Example
+
+<CodeGroup>
+
+```bash cURL
+curl --request GET \
+  --url 'https://api.example.com/users/get-by-id?id=1'
+```
+
+</CodeGroup>
+
+## Response
+
+<ResponseField name="id" type="number" required>
+  Unique numeric identifier for the user.
+</ResponseField>
+
+<ResponseField name="username" type="string" required>
+  Display name of the user.
+</ResponseField>
+
+<ResponseField name="gmail" type="string" required>
+  Gmail address of the user.
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  ISO 8601 timestamp of when the account was created.
+</ResponseField>
+
+<ResponseField name="admin" type="boolean" required>
+  Whether the user has administrator privileges.
+</ResponseField>
+
+```json 200 Success
+{
+  "id": 1,
+  "username": "johndoe",
+  "gmail": "john@example.com",
+  "created_at": "2024-01-15T10:30:00",
+  "admin": false
+}
+```
+
+<Note>
+  The `password` field is excluded from this response. User credentials are never returned by any read endpoint.
+</Note>
+
+## Error codes
+
+| Code | Cause |
+| ---- | ----- |
+| `500` | The query failed — typically because the provided ID does not exist in the database. |

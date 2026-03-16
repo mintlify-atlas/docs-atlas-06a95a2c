@@ -1,0 +1,65 @@
+---
+title: "Register user"
+description: "Create a new user account with a username, password, and Gmail address."
+---
+
+`POST /users/register`
+
+Creates a new user account. All parameters are passed as query strings.
+
+<Note>
+  No authentication required. This endpoint is public.
+</Note>
+
+## Parameters
+
+<ParamField query="username" type="string" required>
+  The display name for the new user account.
+</ParamField>
+
+<ParamField query="password" type="string" required>
+  The account password. Must meet the following requirements:
+
+  - Minimum 8 characters
+  - At least one uppercase letter (A–Z)
+  - At least one lowercase letter (a–z)
+  - At least one digit (0–9)
+</ParamField>
+
+<ParamField query="gmail" type="string" required>
+  The Gmail address used as the login identifier. Must be unique.
+</ParamField>
+
+## Example
+
+<CodeGroup>
+
+```bash cURL
+curl --request POST \
+  --url 'https://api.example.com/users/register?username=johndoe&password=Secret123&gmail=john%40example.com'
+```
+
+</CodeGroup>
+
+## Response
+
+<ResponseField name="status" type="string" required>
+  Always `"ok"` on success.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Human-readable confirmation message.
+</ResponseField>
+
+```json 200 Success
+{
+  "status": "ok",
+  "message": "Usuario creado correctamente"
+}
+```
+
+## Error codes
+
+| Code | Cause |
+| ---- | ----- |
+| `500` | User creation failed — most commonly a duplicate Gmail address or database error. |

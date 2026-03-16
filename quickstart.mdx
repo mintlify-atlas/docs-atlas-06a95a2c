@@ -1,80 +1,244 @@
 ---
 title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+description: "Get the Periodico Backend API running locally and make your first request in minutes."
 ---
 
-## Get started in three steps
+## Prerequisites
 
-Get your documentation site running locally and make your first customization.
+- Python 3.8 or higher
+- MySQL 5.7 or higher (running locally or accessible remotely)
+- `git`
 
-### Step 1: Set up your local environment
+## Setup
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/nic0lasGP/periodicoBackend.git
+    cd periodicoBackend
+    ```
+  </Step>
 
-### Step 2: Deploy your changes
+  <Step title="Create a virtual environment">
+    <CodeGroup>
+      ```bash macOS / Linux
+      python3 -m venv .venv
+      source .venv/bin/activate
+      ```
+      ```bash Windows
+      python -m venv .venv
+      .venv\Scripts\activate
+      ```
+    </CodeGroup>
+  </Step>
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+  <Step title="Install dependencies">
+    ```bash
+    pip install fastapi uvicorn pymysql python-jose[cryptography] bcrypt python-multipart
+    ```
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+    Key packages:
+    | Package | Purpose |
+    |---|---|
+    | `fastapi` | Web framework |
+    | `uvicorn` | ASGI server |
+    | `pymysql` | MySQL driver |
+    | `python-jose[cryptography]` | JWT encoding/decoding |
+    | `bcrypt` | Password hashing |
+    | `python-multipart` | File upload support |
+  </Step>
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+  <Step title="Create the database">
+    Connect to MySQL and create the database:
 
-### Step 3: Go live
+    ```sql
+    CREATE DATABASE periodicodb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    ```
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+    Then create the required tables:
+
+    ```sql
+    USE periodicodb;
+
+    CREATE TABLE users (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      username VARCHAR(255) NOT NULL,
+      password VARCHAR(255) NOT NULL,
+      gmail VARCHAR(255) UNIQUE NOT NULL,
+      admin BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE sections (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(255) UNIQUE NOT NULL
+    );
+
+    CREATE TABLE posts (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      title VARCHAR(255) NOT NULL,
+      slug VARCHAR(255) NOT NULL,
+      body MEDIUMBLOB,
+      user_id INT NOT NULL,
+      section_id INT NOT NULL,
+      published TINYINT(1) DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id),
+      FOREIGN KEY (section_id) REFERENCES sections(id)
+    );
+
+    CREATE TABLE images (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      post_id INT NOT NULL,
+      filename VARCHAR(255),
+      mime_type VARCHAR(100),
+      data MEDIUMBLOB,
+      size INT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (post_id) REFERENCES posts(id)
+    );
+
+    CREATE TABLE videos (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      post_id INT NOT NULL,
+      filename VARCHAR(255),
+      mime_type VARCHAR(100),
+      data LONGBLOB,
+      size INT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (post_id) REFERENCES posts(id)
+    );
+    ```
+  </Step>
+
+  <Step title="Configure environment variables">
+    Set the following environment variables before starting the server. The values in parentheses are the defaults used if the variable is not set.
+
+    | Variable | Default | Description |
+    |---|---|---|
+    | `DB_HOST` | `127.0.0.1` | MySQL host |
+    | `DB_USER` | `root` | MySQL username |
+    | `DB_PORT` | `3306` | MySQL port |
+    | `DB_PASSWORD` | `password` | MySQL password |
+    | `DB_NAME` | `periodicodb` | Database name |
+
+    <CodeGroup>
+      ```bash macOS / Linux
+      export DB_HOST=127.0.0.1
+      export DB_USER=root
+      export DB_PORT=3306
+      export DB_PASSWORD=your_password
+      export DB_NAME=periodicodb
+      ```
+      ```powershell Windows
+      $env:DB_HOST="127.0.0.1"
+      $env:DB_USER="root"
+      $env:DB_PORT="3306"
+      $env:DB_PASSWORD="your_password"
+      $env:DB_NAME="periodicodb"
+      ```
+    </CodeGroup>
+
+    <Warning>
+      The default `SECRET_KEY` in `app/security/authToken.py` is set to `"token"`. Change this to a long, random string before deploying to any non-local environment.
+    </Warning>
+  </Step>
+
+  <Step title="Start the server">
+    ```bash
+    uvicorn main:app --reload
+    ```
+
+    The API will be available at `http://127.0.0.1:8000`. FastAPI's interactive documentation is at `http://127.0.0.1:8000/docs`.
+  </Step>
+</Steps>
+
+## Make your first requests
+
+### 1. Register a user
+
+Parameters are passed as query strings:
+
+```bash
+curl -X POST "http://127.0.0.1:8000/users/register?username=johndoe&password=Secret123&gmail=john@example.com"
+```
+
+```json
+{
+  "status": "ok",
+  "message": "Usuario creado correctamente"
+}
+```
+
+<Tip>
+  Passwords must be at least 8 characters and contain at least one uppercase letter, one lowercase letter, and one digit.
+</Tip>
+
+### 2. Log in to get a token
+
+```bash
+curl -X POST "http://127.0.0.1:8000/users/login?gmail=john@example.com&password=Secret123"
+```
+
+```json
+{
+  "status": "ok",
+  "message": "Login correcto",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": 1,
+    "username": "johndoe",
+    "gmail": "john@example.com"
+  }
+}
+```
+
+Store the `token` value — you'll use it to authenticate subsequent requests.
+
+### 3. Create a section (admin required)
+
+First, grant admin privileges to your user directly in MySQL:
+
+```sql
+UPDATE users SET admin = TRUE WHERE gmail = 'john@example.com';
+```
+
+Log in again to get a new token with `admin: true` in the payload. Then create a section:
+
+```bash
+curl -X POST "http://127.0.0.1:8000/admin/create-section?name=Technology" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+```json
+{
+  "status": "ok",
+  "message": "Sección creada correctamente",
+  "id": 1
+}
+```
+
+### 4. Fetch all posts
+
+```bash
+curl "http://127.0.0.1:8000/posts/get-all"
+```
+
+Returns an array of post objects with their body content decompressed.
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
-
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Authentication" icon="shield-halved" href="/authentication">
+    Learn how JWT tokens work and how to secure your requests.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/posts/get-all">
+    Browse the full endpoint documentation.
+  </Card>
+  <Card title="Admin guide" icon="user-shield" href="/guides/admin-guide">
+    Learn how to manage posts, sections, and users as an admin.
+  </Card>
+  <Card title="Media upload" icon="photo-film" href="/guides/media-upload">
+    Attach images and videos to your posts.
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

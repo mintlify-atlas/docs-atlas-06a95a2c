@@ -1,0 +1,70 @@
+---
+title: "Delete account"
+description: "Permanently delete the currently authenticated user's account."
+---
+
+`DELETE /users/delete-me`
+
+Permanently deletes the account of the user identified by the provided Bearer token. This action cannot be undone.
+
+<Warning>
+  This endpoint requires authentication. The account deleted is determined by the identity embedded in the JWT — users can only delete their own account.
+</Warning>
+
+<Warning>
+  Account deletion is permanent and irreversible. All data associated with the account will be removed.
+</Warning>
+
+## Authentication
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token obtained from the [login](/api/users/login) endpoint.
+
+  Format: `Bearer <token>`
+</ParamField>
+
+## Example
+
+<CodeGroup>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://api.example.com/users/delete-me' \
+  --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+```
+
+</CodeGroup>
+
+## Response
+
+<ResponseField name="status" type="string" required>
+  `"ok"` if the user was deleted successfully, `"error"` if no rows were affected.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Human-readable message describing the outcome.
+</ResponseField>
+
+```json 200 Success
+{
+  "status": "ok",
+  "message": "Usuario '1' eliminado correctamente"
+}
+```
+
+```json 200 No rows affected
+{
+  "status": "error",
+  "message": "No se consiguio eliminar ningun usuario"
+}
+```
+
+<Note>
+  When deletion fails at the database level (no rows affected), the server still returns HTTP `200` with `"status": "error"` in the body rather than a 4xx/5xx status code.
+</Note>
+
+## Error codes
+
+| Code | Cause |
+| ---- | ----- |
+| `401` | Token is missing, malformed, or has expired. |

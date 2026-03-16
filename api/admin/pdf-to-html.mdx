@@ -1,0 +1,50 @@
+---
+title: "PDF to HTML"
+description: "Convert an uploaded PDF file to an HTML string."
+---
+
+## Endpoint
+
+```
+POST /convert/pdf-to-html
+```
+
+<Note>
+  This endpoint does not require authentication and is publicly accessible.
+</Note>
+
+## Parameters
+
+<ParamField body="file" type="file" required>
+  The PDF file to convert. Must be sent as `multipart/form-data`.
+
+  **Allowed type:** `application/pdf` only
+</ParamField>
+
+## Request example
+
+```bash cURL
+curl --request POST \
+  --url 'https://api.example.com/convert/pdf-to-html' \
+  --form 'file=@/path/to/document.pdf'
+```
+
+## Response
+
+**200 OK**
+
+<ResponseField name="html" type="string">
+  The full HTML representation of the converted PDF document.
+</ResponseField>
+
+```json 200
+{
+  "html": "<!DOCTYPE html><html><head>...</head><body><p>Converted content...</p></body></html>"
+}
+```
+
+## Error codes
+
+| Status | Description |
+|--------|-------------|
+| `400`  | The uploaded file is not a PDF (`Content-Type` is not `application/pdf`). |

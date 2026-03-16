@@ -1,0 +1,170 @@
+---
+title: "Authentication"
+description: "Periodico Backend uses JWT Bearer tokens signed with HS256. Tokens are obtained at login and must be sent in the Authorization header on every protected request."
+---
+
+All protected endpoints require a valid JWT Bearer token. Tokens are issued by the login endpoint and expire after 12 hours.
+
+<Warning>
+  The default `SECRET_KEY` in `app/security/authToken.py` is set to the literal string `"token"`. This **must** be changed to a long, random secret before deploying to any non-local environment. Anyone who knows the secret key can forge valid tokens.
+</Warning>
+
+## How it works
+
+1. The client sends credentials to `POST /users/login`.
+2. The server validates the credentials, then calls `createAccessToken` to sign a JWT payload with HS256.
+3. The token is returned in the response body.
+4. The client attaches the token to subsequent requests using the `Authorization: Bearer <token>` header.
+5. FastAPI's `HTTPBearer` scheme extracts the token, and `verifyToken` or `getCurrentUser` decodes and validates it on each protected route.
+
+## Obtaining a token
+
+Send a `POST` request to `/users/login` with the user's email address and password:
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST http://127.0.0.1:8000/users/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "gmail": "john@example.com",
+    "password": "Secret123"
+  }'
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "http://127.0.0.1:8000/users/login",
+    json={
+        "gmail": "john@example.com",
+        "password": "Secret123",
+    },
+)
+data = response.json()
+token = data["token"]
+```
+
+</CodeGroup>
+
+Successful response:
+
+```json
+{
+  "status": "ok",
+  "message": "Login correcto",
+  "token": "<jwt_token>",
+  "user": {
+    "id": 1,
+    "username": "john",
+    "gmail": "john@example.com"
+  }
+}
+```
+
+## Using a token
+
+Include the token in the `Authorization` header of every request to a protected endpoint:
+
+<CodeGroup>
+
+```bash cURL
+curl http://127.0.0.1:8000/posts \
+  -H "Authorization: Bearer <jwt_token>"
+```
+
+```python Python
+response = requests.get(
+    "http://127.0.0.1:8000/posts",
+    headers={"Authorization": f"Bearer {token}"},
+)
+```
+
+</CodeGroup>
+
+If the token is missing, expired, or invalid, the API returns `401 Unauthorized`.
+
+## Token details
+
+| Property | Value |
+|---|---|
+| Algorithm | HS256 |
+| Expiry | 12 hours from issuance |
+| Transport | `Authorization: Bearer <token>` header |
+| Scheme | `HTTPBearer` (FastAPI) |
+
+### JWT payload structure
+
+After decoding, the JWT payload contains:
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | integer | User's database ID |
+| `gmail` | string | User's email address |
+| `username` | string | User's display name |
+| `admin` | boolean | Whether the user has admin privileges |
+| `exp` | number | Unix timestamp of token expiry |
+
+## Roles
+
+The API has two roles: **regular user** and **admin**.
+
+The `admin` field in the JWT payload determines access level. It is set when the token is created and cannot be changed without issuing a new token.
+
+<Tabs>
+  <Tab title="Regular user">
+    Regular users can read public content and manage their own resources (profile, submitted posts). Protected endpoints call `getCurrentUser` to extract the identity from the token.
+
+    ```python
+    # From app/security/authToken.py
+    def getCurrentUser(token: str = Depends(bearer_scheme)):
+        token_use = token.credentials
+        try:
+            payload = jwt.decode(token_use, SECRET_KEY, algorithms=[ALGORITHM])
+            return payload
+        except JWTError as e:
+            raise HTTPException(status_code=401, detail="Token inválido o expirado")
+    ```
+  </Tab>
+  <Tab title="Admin">
+    Admin endpoints depend on `requireAdmin`, which first calls `getCurrentUser` and then checks that `admin` is `true` in the payload. Requests from non-admin users receive `403 Forbidden`.
+
+    ```python
+    # From app/security/authToken.py
+    def requireAdmin(current_user: dict = Depends(getCurrentUser)):
+        if not current_user.get("admin"):
+            raise HTTPException(status_code=403, detail="Se requieren permisos de administrador")
+        return current_user
+    ```
+  </Tab>
+</Tabs>
+
+## Password requirements
+
+Passwords are validated before hashing using the following rule:
+
+```python
+# From app/security/validates.py
+pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$'
+```
+
+A valid password must:
+
+- Be at least **8 characters** long
+- Contain at least one **uppercase letter** (A–Z)
+- Contain at least one **lowercase letter** (a–z)
+- Contain at least one **digit** (0–9)
+
+Passwords that do not meet these requirements are rejected before any database operation is attempted.
+
+## Error responses
+
+| Status | Condition |
+|---|---|
+| `401` | Token is missing, expired, or has an invalid signature |
+| `403` | Token is valid but the user does not have admin privileges |
+
+<Note>
+  Tokens cannot be revoked before expiry. If a token is compromised, the only immediate mitigation is to rotate the `SECRET_KEY`, which invalidates all existing tokens.
+</Note>
