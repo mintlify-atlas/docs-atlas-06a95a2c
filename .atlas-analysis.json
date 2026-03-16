@@ -1,0 +1,132 @@
+{
+  "projectType": "api-service",
+  "projectName": "Periodico Backend",
+  "projectDescription": "A FastAPI-based REST API backend for a digital newspaper platform, providing endpoints for managing news posts, sections, users, media (images and videos), and admin operations.",
+  "theme": "sequoia",
+  "primaryColor": "#1a1a2e",
+  "lightColor": "#2563eb",
+  "darkColor": "#0f172a",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": ["introduction", "quickstart", "authentication"]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": ["concepts/posts", "concepts/sections", "concepts/media"]
+          },
+          {
+            "group": "Guides",
+            "pages": ["guides/admin-guide", "guides/user-management", "guides/media-upload"]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Posts",
+            "pages": [
+              "api/posts/get-all",
+              "api/posts/get-by-id",
+              "api/posts/get-by-section",
+              "api/posts/get-by-slug"
+            ]
+          },
+          {
+            "group": "Sections",
+            "pages": [
+              "api/sections/get-all",
+              "api/sections/get-by-id",
+              "api/sections/get-by-name"
+            ]
+          },
+          {
+            "group": "Users",
+            "pages": [
+              "api/users/register",
+              "api/users/login",
+              "api/users/me",
+              "api/users/get-by-id",
+              "api/users/change-password",
+              "api/users/delete",
+              "api/users/verify-token"
+            ]
+          },
+          {
+            "group": "Media",
+            "pages": [
+              "api/media/upload-image",
+              "api/media/get-image",
+              "api/media/delete-image",
+              "api/media/upload-video",
+              "api/media/get-video",
+              "api/media/delete-video"
+            ]
+          },
+          {
+            "group": "Admin",
+            "pages": [
+              "api/admin/get-all-users",
+              "api/admin/create-post",
+              "api/admin/update-post",
+              "api/admin/delete-post",
+              "api/admin/toggle-publish",
+              "api/admin/create-section",
+              "api/admin/delete-section",
+              "api/admin/delete-user",
+              "api/admin/pdf-to-html"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "News post management with zlib-compressed HTML body content",
+    "Section-based content organization for categorizing news articles",
+    "JWT-based authentication with role-based access control (admin vs. regular users)",
+    "Media management for images (with compression) and videos (with streaming)",
+    "PDF to HTML conversion utility for admin content creation",
+    "MySQL database backend with PyMySQL",
+    "CORS support for cross-origin frontend integrations",
+    "BCrypt password hashing for secure credential storage"
+  ],
+  "publicApiSurface": [
+    "GET /posts/get-all",
+    "GET /posts/get-by-id?id={id}",
+    "GET /posts/get-all-by-section?section={name}",
+    "GET /posts/{section}/{slug}",
+    "GET /sections/get-all",
+    "GET /sections/get-by-id?id={id}",
+    "GET /sections/get-by-name?name={name}",
+    "POST /users/register",
+    "POST /users/login",
+    "GET /users/me",
+    "GET /users/get-by-id?id={id}",
+    "GET /users/get-by-gmail?gmail={gmail}",
+    "PATCH /users/change-password",
+    "DELETE /users/delete-me",
+    "GET /user/verify-token",
+    "POST /media/upload/image",
+    "GET /media/image/{media_id}",
+    "DELETE /media/image/delete-by-id",
+    "POST /upload/video",
+    "GET /media/video/{video_id}",
+    "DELETE /media/video/delete-by-id",
+    "GET /admin/users",
+    "POST /admin/create-post",
+    "PATCH /admin/update-post",
+    "DELETE /admin/delete-post",
+    "PATCH /admin/alternate-publish-state-post",
+    "POST /admin/create-section",
+    "DELETE /admin/delete-section",
+    "DELETE /admin/delete-user-by-gmail",
+    "DELETE /admin/delete-user-by-id",
+    "POST /convert/pdf-to-html"
+  ]
+}
